@@ -3,15 +3,15 @@ import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
 
-
 class HomePage extends StatefulWidget {
-  HomePage({Key? key}) : super(key: key);
+  const HomePage({Key? key}) : super(key: key);
   static Route<dynamic> route() => MaterialPageRoute(
-    builder: (context) => HomePage(),
-  );
+        builder: (context) => const HomePage(),
+      );
   @override
   _HomePageState createState() => _HomePageState();
 }
+
 class _HomePageState extends State<HomePage> {
   List<CameraDescription>? cameras;
   CameraController? controller;
@@ -21,6 +21,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _setupCameras();
   }
+
   Future<void> _setupCameras() async {
     try {
       // initialize cameras.
@@ -37,6 +38,7 @@ class _HomePageState extends State<HomePage> {
       _isReady = true;
     });
   }
+
   @override
   Widget build(BuildContext context) {
     if (!_isReady) return new Container();
@@ -61,7 +63,8 @@ class _HomePageState extends State<HomePage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => DisplayPictureScreen(imagePath: '',
+                builder: (context) => DisplayPictureScreen(
+                  imagePath: '',
                   // Pass the automatically generated path to
                   // the DisplayPictureScreen widget.imagePath: image?.path,
                 ),
@@ -75,22 +78,22 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-
 }
 
 class DisplayPictureScreen extends StatelessWidget {
   final String imagePath;
-  const DisplayPictureScreen({Key? key, required this.imagePath}) : super(key: key);
+  const DisplayPictureScreen({Key? key, required this.imagePath})
+      : super(key: key);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Picture Added')),
       // The image is stored as a file on the device. Use the `Image.file`
       // constructor with the given path to display the image.
-      body: Column(
-          children:[Image(image: FileImage(File(imagePath))),Text("Your picture has been added to the gallery")]
-      ),
+      body: Column(children: [
+        Image(image: FileImage(File(imagePath))),
+        Text("Your picture has been added to the gallery")
+      ]),
     );
   }
 }
