@@ -1,110 +1,96 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
+import 'dart:async';
+import 'dart:io';
+import 'package:camera/camera.dart';
+
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
-
+  HomePage({Key? key}) : super(key: key);
   static Route<dynamic> route() => MaterialPageRoute(
-        builder: (context) => const HomePage(),
-      );
-
+    builder: (context) => HomePage(),
+  );
   @override
   _HomePageState createState() => _HomePageState();
 }
-
 class _HomePageState extends State<HomePage> {
-// var location = new Location();
-  Position? _currentPosition;
-  String? _currentAddress;
-  Map<String, double>? userLocation;
-  var placeArray = [];
-  String dispLocation = "";
-
-  _setLastLocation(lat, long) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('lat', lat);
-    await prefs.setDouble('long', long);
+  List<CameraDescription>? cameras;
+  CameraController? controller;
+  bool _isReady = false;
+  @override
+  void initState() {
+    super.initState();
+    _setupCameras();
   }
-
-  _getLastLocation() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+  Future<void> _setupCameras() async {
+    try {
+      // initialize cameras.
+      cameras = await availableCameras();
+      final firstCamera = cameras!.first;
+      // initialize camera controllers.
+      controller = new CameraController(cameras![0], ResolutionPreset.medium);
+      await controller!.initialize();
+    } on CameraException catch (_) {
+      // do something on error.
+    }
+    if (!mounted) return;
     setState(() {
-      placeArray = [prefs.getDouble('lat'), prefs.getDouble('long')];
-      dispLocation =
-          'Last coordinates LAT: ${placeArray[0]}, LNG: ${placeArray[1]}';
+      _isReady = true;
     });
   }
-
   @override
   Widget build(BuildContext context) {
+    if (!_isReady) return new Container();
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Home"),
+        title: Text("Take a Picture"),
       ),
-      body: Container(
-        margin: const EdgeInsets.all(10.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            ElevatedButton(
-                child: const Text("Get location"),
-                onPressed: () {
-                  _getCurrentLocation();
-                }),
-            if (_currentPosition != null)
-              Text(
-                  "LAT: ${_currentPosition?.latitude}, LNG: ${_currentPosition?.longitude}"),
-            if (_currentAddress != null) Text(_currentAddress!),
-            if (_currentPosition != null)
-              ElevatedButton(
-                  child: const Text("Save current location"),
-                  onPressed: () {
-                    _setLastLocation(_currentPosition?.latitude,
-                        _currentPosition?.longitude);
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(
-                            'Saved LAT: ${_currentPosition?.latitude}, LNG: ${_currentPosition?.longitude}')));
-                  }),
-            ElevatedButton(
-                child: const Text("Get last location"),
-                onPressed: () {
-                  _getLastLocation();
-                }),
-            Text(dispLocation),
-          ],
-        ),
+      body: Center(
+        child: CameraPreview(controller!),
+      ),
+      floatingActionButton: ElevatedButton(
+        child: Text("Add your picture to our gallery"),
+        // Provide an onPressed callback.
+        onPressed: () async {
+          // Take the Picture in a try / catch block. If anything goes wrong,
+          // catch the error.
+          try {
+            // Attempt to take a picture and get the file `image`
+            // where it was saved.
+            final image = await controller!.takePicture();
+            // If the picture was taken, display it on a new screen.
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DisplayPictureScreen(imagePath: '',
+                  // Pass the automatically generated path to
+                  // the DisplayPictureScreen widget.imagePath: image?.path,
+                ),
+              ),
+            );
+          } catch (e) {
+            // If an error occurs, log the error to the console.
+            print(e);
+          }
+        },
       ),
     );
   }
 
-  _getCurrentLocation() {
-    Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.best,
-            forceAndroidLocationManager: true)
-        .then((Position position) {
-      setState(() {
-        _currentPosition = position;
-        _getAddressFromLatLng();
-      });
-    }).catchError((e) {
-      print(e);
-    });
-  }
 
-  _getAddressFromLatLng() async {
-    try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-          _currentPosition!.latitude, _currentPosition!.longitude);
-      Placemark place = placemarks[0];
-      setState(() {
-        _currentAddress =
-            "${place.street}, ${place.subAdministrativeArea}, ${place.country}";
-      });
-    } catch (e) {
-      print(e);
-    }
+}
+
+class DisplayPictureScreen extends StatelessWidget {
+  final String imagePath;
+  const DisplayPictureScreen({Key? key, required this.imagePath}) : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Picture Added')),
+      // The image is stored as a file on the device. Use the `Image.file`
+      // constructor with the given path to display the image.
+      body: Column(
+          children:[Image(image: FileImage(File(imagePath))),Text("Your picture has been added to the gallery")]
+      ),
+    );
   }
 }
