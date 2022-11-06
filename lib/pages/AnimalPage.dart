@@ -109,8 +109,34 @@ class PostDetail extends StatelessWidget {
 }
 
 Widget _buildVerticalLayout(post) {
-  return Text("Vertical");
+  return Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+    Image.network(post.animalPic),
+    Expanded(
+      child:
+      Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Text("Name: ${post.animalName}"),
+        Text("Age: ${post.animalAge}"),
+        Text("Type: ${post.animalType}"),
+        Text("Breed: ${post.animalBreed}")
+      ]),
+    )
+  ]);
 }
 Widget _buildHorizontalLayout(post) {
-  return Text("Horizontal");
+  return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Image.network(post.animalPic),
+        Expanded(
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text("Name: ${post.animalName}"),
+                  Text("Age: ${post.animalAge}"),
+                  Text("Type: ${post.animalType}"),
+                  Text("Breed: ${post.animalBreed}"),
+                ]))
+      ]);
 }
