@@ -1,99 +1,115 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:io';
-import 'package:camera/camera.dart';
+import 'package:all_sensors/all_sensors.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  HomePage({Key? key}) : super(key: key);
+
   static Route<dynamic> route() => MaterialPageRoute(
-        builder: (context) => const HomePage(),
+        builder: (context) => HomePage(),
       );
+
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  List<CameraDescription>? cameras;
-  CameraController? controller;
-  bool _isReady = false;
+  List<double>? _accelerometerValues;
+  List<double>? _userAccelerometerValues;
+  List<double>? _gyroscopeValues;
+  bool _proximityValues = false;
+  List<StreamSubscription<dynamic>> _streamSubscriptions =
+      <StreamSubscription<dynamic>>[];
+
+  @override
+  Widget build(BuildContext context) {
+    final List<String>? accelerometer =
+        _accelerometerValues?.map((double v) => v.toStringAsFixed(1))?.toList();
+    final List<String>? gyroscope =
+        _gyroscopeValues?.map((double v) => v.toStringAsFixed(1))?.toList();
+    final List<String>? userAccelerometer = _userAccelerometerValues
+        ?.map((double v) => v.toStringAsFixed(1))
+        ?.toList();
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Sensor Example'),
+      ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: <Widget>[
+          Padding(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text('Accelerometer: $accelerometer'),
+              ],
+            ),
+            padding: const EdgeInsets.all(16.0),
+          ),
+          Padding(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text('UserAccelerometer: $userAccelerometer'),
+              ],
+            ),
+            padding: const EdgeInsets.all(16.0),
+          ),
+          Padding(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text('Gyroscope: $gyroscope'),
+              ],
+            ),
+            padding: const EdgeInsets.all(16.0),
+          ),
+          Padding(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text('Proximity: $_proximityValues'),
+              ],
+            ),
+            padding: const EdgeInsets.all(16.0),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    for (StreamSubscription<dynamic> subscription in _streamSubscriptions) {
+      subscription.cancel();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _setupCameras();
-  }
-
-  Future<void> _setupCameras() async {
-    try {
-      // initialize cameras.
-      cameras = await availableCameras();
-      final firstCamera = cameras!.first;
-      // initialize camera controllers.
-      controller = new CameraController(cameras![0], ResolutionPreset.medium);
-      await controller!.initialize();
-    } on CameraException catch (_) {
-      // do something on error.
-    }
-    if (!mounted) return;
-    setState(() {
-      _isReady = true;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_isReady) return new Container();
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Take a Picture"),
-      ),
-      body: Center(
-        child: CameraPreview(controller!),
-      ),
-      floatingActionButton: ElevatedButton(
-        child: Text("Add your picture to our gallery"),
-        // Provide an onPressed callback.
-        onPressed: () async {
-          // Take the Picture in a try / catch block. If anything goes wrong,
-          // catch the error.
-          try {
-            // Attempt to take a picture and get the file `image`
-            // where it was saved.
-            final image = await controller!.takePicture();
-            // If the picture was taken, display it on a new screen.
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => DisplayPictureScreen(
-                  imagePath: '',
-                  // Pass the automatically generated path to
-                  // the DisplayPictureScreen widget.imagePath: image?.path,
-                ),
-              ),
-            );
-          } catch (e) {
-            // If an error occurs, log the error to the console.
-            print(e);
-          }
-        },
-      ),
-    );
-  }
-}
-
-class DisplayPictureScreen extends StatelessWidget {
-  final String imagePath;
-  const DisplayPictureScreen({Key? key, required this.imagePath})
-      : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Picture Added')),
-      // The image is stored as a file on the device. Use the `Image.file`
-      // constructor with the given path to display the image.
-      body: Column(children: [
-        Image(image: FileImage(File(imagePath))),
-        Text("Your picture has been added to the gallery")
-      ]),
-    );
+    _streamSubscriptions
+        .add(accelerometerEvents!.listen((AccelerometerEvent event) {
+      setState(() {
+        _accelerometerValues = <double>[event.x, event.y, event.z];
+      });
+    }));
+    _streamSubscriptions.add(gyroscopeEvents!.listen((GyroscopeEvent event) {
+      setState(() {
+        _gyroscopeValues = <double>[event.x, event.y, event.z];
+      });
+    }));
+    _streamSubscriptions
+        .add(userAccelerometerEvents!.listen((UserAccelerometerEvent event) {
+      setState(() {
+        _userAccelerometerValues = <double>[event.x, event.y, event.z];
+      });
+    }));
+    _streamSubscriptions.add(proximityEvents!.listen((ProximityEvent event) {
+      setState(() {
+        _proximityValues = event.getValue();
+      });
+    }));
   }
 }
