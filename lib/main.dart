@@ -50,7 +50,7 @@ class TabNavigationItem {
           title: "About",
         ),
         TabNavigationItem(
-          page: const AnimalPage(),
+          page: AnimalPage(),
           icon: const Icon(Icons.pets),
           title: "Animals",
         ),

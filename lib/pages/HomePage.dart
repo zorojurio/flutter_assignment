@@ -11,7 +11,7 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 class _HomePageState extends State<HomePage> {
-  Future weatherFuture = WeatherNetworkService.getWeatherData("Arona");
+  Future weatherFuture = WeatherNetworkService.getWeatherData("Stafford");
   @override
   Widget build(BuildContext context) {
     return Scaffold(
