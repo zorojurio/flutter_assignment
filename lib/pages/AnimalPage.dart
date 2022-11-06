@@ -3,6 +3,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart';
 import 'package:flutter/foundation.dart';
+typedef Null ItemSelectedCallback(int value);
+
 class AnimalPage extends StatefulWidget {
   AnimalPage({Key? key}) : super(key: key);
   static Route<dynamic> route() => MaterialPageRoute(
@@ -13,8 +15,12 @@ class AnimalPage extends StatefulWidget {
 }
 class _AnimalPageState extends State<AnimalPage> {
   final HttpService httpService = HttpService();
+  var isLargeScreen = false;
+  Post? savedPost;
   @override
   Widget build(BuildContext context) {
+    MediaQueryData media;
+    media = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text("Animals"),
@@ -23,23 +29,34 @@ class _AnimalPageState extends State<AnimalPage> {
         future: httpService.getPosts(),
         builder: (BuildContext context, AsyncSnapshot<List<Post>> snapshot) {
           if (snapshot.hasData) {
-            List<Post>? posts = snapshot.data;
-            return ListView(
-              children: posts!
-                  .map(
-                    (Post post) => ListTile(
-                  title: Text(post.animalName),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => PostDetail(
-                        post: post,
-                      ),
-                    ),
-                  ),
+            List<Post> posts = snapshot.data!;
+            if (savedPost == null) {
+              savedPost = posts[0];
+            }
+            return OrientationBuilder(builder: (context, orientation) {
+              if (media.size.width > 800) {
+                isLargeScreen = true;
+              } else {
+                isLargeScreen = false;
+              }
+              return Row(children: <Widget>[
+                Expanded(
+                  child: ListWidget(posts, (value) {
+                    if (isLargeScreen) {
+                      savedPost = posts[value];
+                      setState(() {});
+                    } else {
+                      Navigator.push(context, MaterialPageRoute(
+                          builder: (context) {
+                            return PostDetail(post: posts[value]);
+                          }));
+                    }}),
                 ),
-              )
-                  .toList(),
-            );
+                isLargeScreen
+                    ? Expanded(flex: 2, child: DetailWidget(post: savedPost!))
+                    : Container()
+              ]);
+            });
           } else {
             return Center(child: Text("Not fetching"));
           }
@@ -48,6 +65,7 @@ class _AnimalPageState extends State<AnimalPage> {
     );
   }
 }
+
 class HttpService {
   final String postsURL = "https://fi67.github.io/JsonData/apiAnimals.json";
   Future<List<Post>> getPosts() async {
@@ -139,4 +157,70 @@ Widget _buildHorizontalLayout(post) {
                   Text("Breed: ${post.animalBreed}"),
                 ]))
       ]);
+}
+
+class ListWidget extends StatefulWidget {
+  final List<Post> posts;
+  final ItemSelectedCallback onItemSelected;
+  ListWidget(
+      this.posts,
+      this.onItemSelected,
+      );
+  @override
+  _ListWidgetState createState() => _ListWidgetState();
+}
+class _ListWidgetState extends State<ListWidget> {
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      itemCount: widget.posts.length,
+      itemBuilder: (context, position) {
+        return Padding(
+          padding: const EdgeInsets.all(2.0),
+          child: Card(
+            child: InkWell(
+              onTap: () {
+                widget.onItemSelected(position);
+              },
+              child: Row(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.all(2.0),
+                    child: Text(
+                      widget.posts[position].animalName,
+                      style: TextStyle(fontSize: 16.0),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+class DetailWidget extends StatelessWidget {
+  final Post post;
+  DetailWidget({required this.post});
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 450),
+              child: Image.network(this.post.animalPic))),
+          Expanded(
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text("Name: ${this.post.animalName}"),
+                    Text("Age: ${this.post.animalAge}"),
+                    Text("Type: ${this.post.animalType}"),
+                    Text("Breed: ${this.post.animalBreed}"),
+                  ]))
+        ]);
+  }
 }
