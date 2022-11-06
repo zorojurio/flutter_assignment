@@ -4,18 +4,14 @@ import 'package:http/http.dart' as http;
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
-
   static Route<dynamic> route() => MaterialPageRoute(
-        builder: (context) => HomePage(),
-      );
-
+    builder: (context) => HomePage(),
+  );
   @override
   _HomePageState createState() => _HomePageState();
 }
-
 class _HomePageState extends State<HomePage> {
-  Future weatherFuture = WeatherNetworkService.getWeatherData("Colombo");
-
+  Future weatherFuture = WeatherNetworkService.getWeatherData("Arona");
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,12 +54,11 @@ class WeatherNetworkService {
     /// https://home.openweathermap.org/api_keys
     /// 1. Register
     /// 2. Generate Api key
-    String myKey = "36725ab57ef18a2d76bc94757428da09";
-    String openWeatherUrl =
-        "https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${myKey}";
+    String myKey = "b4f16b7fb89ba391007f3d6135adca41";
+    String openWeatherUrl ="https://api.openweathermap.org/data/2.5/weather?q=${cityName}&units=metric&appid=${myKey}";
     print(openWeatherUrl);
     var response = await http.get(Uri.parse(openWeatherUrl));
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       var jsonResponse = convert.jsonDecode(response.body);
       return Weather.fromJson(jsonResponse);
     } else {
@@ -78,22 +73,18 @@ class Weather {
   double temperature;
   double temperatureFeeling;
   String weatherPic;
-
-  Weather(
-      this.name, this.temperature, this.temperatureFeeling, this.weatherPic);
-
+  Weather(this.name, this.temperature, this.temperatureFeeling, this.weatherPic);
   factory Weather.fromJson(Map<String, dynamic> jsonResponse) => Weather(
       jsonResponse["name"],
       jsonResponse["main"]["temp"],
       jsonResponse["main"]["feels_like"],
-      jsonResponse["weather"][0]["main"]);
+      jsonResponse["weather"][0]["main"]
+  );
 }
 
 class WeatherDataWidget extends StatelessWidget {
   final Weather weather;
-
   const WeatherDataWidget({required this.weather});
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -118,15 +109,15 @@ class WeatherDataWidget extends StatelessWidget {
           ),
           weather.temperatureFeeling < 15.0
               ? Icon(
-                  Icons.cloud,
-                  color: Colors.grey,
-                  size: 72,
-                )
+            Icons.cloud,
+            color: Colors.grey,
+            size: 72,
+          )
               : Icon(
-                  Icons.wb_sunny,
-                  color: Colors.yellow,
-                  size: 72,
-                )
+            Icons.wb_sunny,
+            color: Colors.yellow,
+            size: 72,
+          )
         ],
       ),
     );
