@@ -41,6 +41,8 @@ dependencies:
   geocoding: ^2.0.5
   geolocator: ^9.0.2
   camera: ^0.10.0+4
+  light: ^2.1.0
+  light_sensor: ^2.0.2
 
 dev_dependencies:
   flutter_test:

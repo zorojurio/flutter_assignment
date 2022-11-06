@@ -1,99 +1,56 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-import 'dart:io';
-import 'package:camera/camera.dart';
+import 'package:light_sensor/light_sensor.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  HomePage({Key? key}) : super(key: key);
   static Route<dynamic> route() => MaterialPageRoute(
-        builder: (context) => const HomePage(),
-      );
+    builder: (context) => HomePage(),
+  );
   @override
   _HomePageState createState() => _HomePageState();
 }
-
 class _HomePageState extends State<HomePage> {
-  List<CameraDescription>? cameras;
-  CameraController? controller;
-  bool _isReady = false;
   @override
-  void initState() {
-    super.initState();
-    _setupCameras();
-  }
-
-  Future<void> _setupCameras() async {
-    try {
-      // initialize cameras.
-      cameras = await availableCameras();
-      final firstCamera = cameras!.first;
-      // initialize camera controllers.
-      controller = new CameraController(cameras![0], ResolutionPreset.medium);
-      await controller!.initialize();
-    } on CameraException catch (_) {
-      // do something on error.
-    }
-    if (!mounted) return;
-    setState(() {
-      _isReady = true;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_isReady) return new Container();
+  Widget build(BuildContext context){
     return Scaffold(
       appBar: AppBar(
-        title: Text("Take a Picture"),
+        title: const Text("Home"),
       ),
-      body: Center(
-        child: CameraPreview(controller!),
+      body: Container(
+        margin: const EdgeInsets.all(10.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text("Light Sensor"),
+            FutureBuilder<bool?>(
+                future: LightSensor.hasSensor,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    final bool? hasSensor = snapshot.data;
+                    if (hasSensor == null) {
+                      return const Text('Unable to find out if there is a lightsensor');
+                    } else if (hasSensor) {
+                      return StreamBuilder<int>(
+                          stream: LightSensor.lightSensorStream,
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              return Text('Running on: ${snapshot.data} LUX');
+                            } else {
+                              return const Text('Running on: unknown');
+                            }
+                          });
+                    } else {
+                      return const Text("Your device doesn't have a light sensor");
+                    }
+                  } else {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                }
+            )
+          ],
+        ),
       ),
-      floatingActionButton: ElevatedButton(
-        child: Text("Add your picture to our gallery"),
-        // Provide an onPressed callback.
-        onPressed: () async {
-          // Take the Picture in a try / catch block. If anything goes wrong,
-          // catch the error.
-          try {
-            // Attempt to take a picture and get the file `image`
-            // where it was saved.
-            final image = await controller!.takePicture();
-            // If the picture was taken, display it on a new screen.
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => DisplayPictureScreen(
-                  imagePath: '',
-                  // Pass the automatically generated path to
-                  // the DisplayPictureScreen widget.imagePath: image?.path,
-                ),
-              ),
-            );
-          } catch (e) {
-            // If an error occurs, log the error to the console.
-            print(e);
-          }
-        },
-      ),
-    );
-  }
-}
-
-class DisplayPictureScreen extends StatelessWidget {
-  final String imagePath;
-  const DisplayPictureScreen({Key? key, required this.imagePath})
-      : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Picture Added')),
-      // The image is stored as a file on the device. Use the `Image.file`
-      // constructor with the given path to display the image.
-      body: Column(children: [
-        Image(image: FileImage(File(imagePath))),
-        Text("Your picture has been added to the gallery")
-      ]),
     );
   }
 }
