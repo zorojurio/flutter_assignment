@@ -13,6 +13,7 @@ class AnimalPage extends StatefulWidget {
   @override
   _AnimalPageState createState() => _AnimalPageState();
 }
+
 class _AnimalPageState extends State<AnimalPage> {
   final HttpService httpService = HttpService();
   @override
