@@ -3,8 +3,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart';
 import 'package:flutter/foundation.dart';
-
-
 class AnimalPage extends StatefulWidget {
   AnimalPage({Key? key}) : super(key: key);
   static Route<dynamic> route() => MaterialPageRoute(
@@ -13,7 +11,6 @@ class AnimalPage extends StatefulWidget {
   @override
   _AnimalPageState createState() => _AnimalPageState();
 }
-
 class _AnimalPageState extends State<AnimalPage> {
   final HttpService httpService = HttpService();
   @override
@@ -97,16 +94,23 @@ class PostDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(post.animalName),
-        ),
-        body:Column(children: [
-          Image.network(post.animalPic),
-          Text("Name: ${post.animalName}"),
-          Text("Age: ${post.animalAge}"),
-          Text("Type: ${post.animalType}"),
-          Text("Breed: ${post.animalBreed}"),
-        ])
+      appBar: AppBar(
+        title: Text(post.animalName),
+      ),
+      body: OrientationBuilder(
+        builder: (context, orientation) {
+          return orientation == Orientation.portrait
+              ? _buildVerticalLayout(post)
+              : _buildHorizontalLayout(post);
+        },
+      ),
     );
   }
+}
+
+Widget _buildVerticalLayout(post) {
+  return Text("Vertical");
+}
+Widget _buildHorizontalLayout(post) {
+  return Text("Horizontal");
 }
