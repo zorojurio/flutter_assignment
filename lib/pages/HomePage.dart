@@ -1,78 +1,50 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-import 'dart:io';
-import 'package:camera/camera.dart';
+import 'dart:convert' as convert;
+import 'package:http/http.dart' as http;
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  HomePage({Key? key}) : super(key: key);
+
   static Route<dynamic> route() => MaterialPageRoute(
-        builder: (context) => const HomePage(),
+        builder: (context) => HomePage(),
       );
+
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  List<CameraDescription>? cameras;
-  CameraController? controller;
-  bool _isReady = false;
-  @override
-  void initState() {
-    super.initState();
-    _setupCameras();
-  }
-
-  Future<void> _setupCameras() async {
-    try {
-      // initialize cameras.
-      cameras = await availableCameras();
-      final firstCamera = cameras!.first;
-      // initialize camera controllers.
-      controller = new CameraController(cameras![0], ResolutionPreset.medium);
-      await controller!.initialize();
-    } on CameraException catch (_) {
-      // do something on error.
-    }
-    if (!mounted) return;
-    setState(() {
-      _isReady = true;
-    });
-  }
+  Future weatherFuture = WeatherNetworkService.getWeatherData("Colombo");
 
   @override
   Widget build(BuildContext context) {
-    if (!_isReady) return new Container();
     return Scaffold(
       appBar: AppBar(
-        title: Text("Take a Picture"),
+        title: Text("Home"),
       ),
-      body: Center(
-        child: CameraPreview(controller!),
-      ),
-      floatingActionButton: ElevatedButton(
-        child: Text("Add your picture to our gallery"),
-        // Provide an onPressed callback.
-        onPressed: () async {
-          // Take the Picture in a try / catch block. If anything goes wrong,
-          // catch the error.
-          try {
-            // Attempt to take a picture and get the file `image`
-            // where it was saved.
-            final image = await controller!.takePicture();
-            // If the picture was taken, display it on a new screen.
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => DisplayPictureScreen(
-                  imagePath: '',
-                  // Pass the automatically generated path to
-                  // the DisplayPictureScreen widget.imagePath: image?.path,
-                ),
+      body: FutureBuilder(
+        future: weatherFuture,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.hasData) {
+            return Center(
+              child: Icon(
+                Icons.check_box,
+                color: Colors.green,
+                size: 128.0,
               ),
             );
-          } catch (e) {
-            // If an error occurs, log the error to the console.
-            print(e);
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: 128.0,
+              ),
+            );
+          } else {
+            return LinearProgressIndicator(
+              value: null,
+            );
           }
         },
       ),
@@ -80,20 +52,83 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class DisplayPictureScreen extends StatelessWidget {
-  final String imagePath;
-  const DisplayPictureScreen({Key? key, required this.imagePath})
-      : super(key: key);
+class WeatherNetworkService {
+  static Future<Weather> getWeatherData(cityName) async {
+    /// This uses your key in the string.
+    /// https://home.openweathermap.org/api_keys
+    /// 1. Register
+    /// 2. Generate Api key
+    String myKey = "36725ab57ef18a2d76bc94757428da09";
+    String openWeatherUrl =
+        "https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${myKey}";
+    print(openWeatherUrl);
+    var response = await http.get(Uri.parse(openWeatherUrl));
+    if (response.statusCode == 200) {
+      var jsonResponse = convert.jsonDecode(response.body);
+      return Weather.fromJson(jsonResponse);
+    } else {
+      throw Exception(response.statusCode);
+    }
+  }
+}
+
+class Weather {
+  //model for weather api
+  String name;
+  double temperature;
+  double temperatureFeeling;
+  String weatherPic;
+
+  Weather(
+      this.name, this.temperature, this.temperatureFeeling, this.weatherPic);
+
+  factory Weather.fromJson(Map<String, dynamic> jsonResponse) => Weather(
+      jsonResponse["name"],
+      jsonResponse["main"]["temp"],
+      jsonResponse["main"]["feels_like"],
+      jsonResponse["weather"][0]["main"]);
+}
+
+class WeatherDataWidget extends StatelessWidget {
+  final Weather weather;
+
+  const WeatherDataWidget({required this.weather});
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Picture Added')),
-      // The image is stored as a file on the device. Use the `Image.file`
-      // constructor with the given path to display the image.
-      body: Column(children: [
-        Image(image: FileImage(File(imagePath))),
-        Text("Your picture has been added to the gallery")
-      ]),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            weather.name,
+            style: TextStyle(
+              fontSize: 50,
+            ),
+          ),
+          Text(
+            weather.weatherPic,
+            style: TextStyle(
+              fontSize: 50,
+            ),
+          ),
+          Text(
+            "${weather.temperature.toStringAsFixed(2)}°C",
+            style: TextStyle(fontSize: 50),
+          ),
+          weather.temperatureFeeling < 15.0
+              ? Icon(
+                  Icons.cloud,
+                  color: Colors.grey,
+                  size: 72,
+                )
+              : Icon(
+                  Icons.wb_sunny,
+                  color: Colors.yellow,
+                  size: 72,
+                )
+        ],
+      ),
     );
   }
 }
