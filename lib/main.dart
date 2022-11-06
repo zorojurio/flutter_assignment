@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:tute/pages/HomePage.dart';
+import 'pages/HomePage.dart';
 import 'pages/AboutPage.dart';
 import 'pages/AnimalPage.dart';
 
 import 'pages/ContactPage.dart';
 void main() {
-  runApp(MITAppNew());
+  runApp(MyApp());
 }
-class MITAppNew extends StatelessWidget {
-  const MITAppNew({Key? key}) : super(key: key);
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +17,7 @@ class MITAppNew extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(),
+      home: const MyHomePage(),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -71,7 +71,7 @@ class TabNavigationItem {
   });
   static List<TabNavigationItem> get items => [
     TabNavigationItem(
-      page: HomePage(),
+      page: const HomePage(),
       icon: Icon(Icons.home),
       title: "Home",
     ),

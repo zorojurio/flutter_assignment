@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
+
   static Route<dynamic> route() => MaterialPageRoute(
-    builder: (context) => HomePage(),
+    builder: (context) => const HomePage(),
   );
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
@@ -16,14 +16,16 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Home'),
+        title: const Text("Home"),
       ),
       body: Container(
         margin: const EdgeInsets.all(10.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[Text("Home")],
+          children: const <Widget>[
+            Text("Home"),
+          ],
         ),
       ),
     );
