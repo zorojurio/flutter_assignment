@@ -22,14 +22,9 @@ class _HomePageState extends State<HomePage> {
         future: weatherFuture,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
-            return Center(
-              child: Icon(
-                Icons.check_box,
-                color: Colors.green,
-                size: 128.0,
-              ),
-            );
-          } else if (snapshot.hasError) {
+            return WeatherDataWidget(weather: snapshot.data);
+          }
+          else if (snapshot.hasError) {
             return Center(
               child: Icon(
                 Icons.error_outline,
@@ -54,11 +49,11 @@ class WeatherNetworkService {
     /// https://home.openweathermap.org/api_keys
     /// 1. Register
     /// 2. Generate Api key
-    String myKey = "b4f16b7fb89ba391007f3d6135adca41";
+    String myKey = "87c1a786e07d530d470199f492da18df";
     String openWeatherUrl ="https://api.openweathermap.org/data/2.5/weather?q=${cityName}&units=metric&appid=${myKey}";
     print(openWeatherUrl);
     var response = await http.get(Uri.parse(openWeatherUrl));
-    if (response.statusCode == 201) {
+    if (response.statusCode == 200) {
       var jsonResponse = convert.jsonDecode(response.body);
       return Weather.fromJson(jsonResponse);
     } else {
@@ -75,10 +70,11 @@ class Weather {
   String weatherPic;
   Weather(this.name, this.temperature, this.temperatureFeeling, this.weatherPic);
   factory Weather.fromJson(Map<String, dynamic> jsonResponse) => Weather(
-      jsonResponse["name"],
-      jsonResponse["main"]["temp"],
-      jsonResponse["main"]["feels_like"],
-      jsonResponse["weather"][0]["main"]
+    jsonResponse["name"],
+    jsonResponse["main"]["temp"],
+    jsonResponse["main"]["feels_like"],
+    jsonResponse["weather"][0]["main"],
+
   );
 }
 
@@ -107,7 +103,7 @@ class WeatherDataWidget extends StatelessWidget {
             "${weather.temperature.toStringAsFixed(2)}°C",
             style: TextStyle(fontSize: 50),
           ),
-          weather.temperatureFeeling < 15.0
+          weather.temperatureFeeling > 15.0
               ? Icon(
             Icons.cloud,
             color: Colors.grey,
